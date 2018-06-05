@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# SEARCH FOR "MY_CODE" COMMENT TO FIND MY CONTRIBUTIONS
 """
 A General Constraint Satisfaction Problem Solver
 @author: yks
@@ -286,6 +286,14 @@ def basic_constraint_checker(state, verbose=False):
             return False
     return True
 
+# MY_CODE
+def basic_objective_function(state, verbose=False):
+    """
+    Basic objective function that rates everything as 0.
+    THIS FUNCTION ASSUMES THAT STATE PASSES ITS CORRESPONDING CONSTRAINTS
+    """
+    return 0
+
 class CSP:
     """
     Top-level wrapper object that encapsulates all the
@@ -330,7 +338,7 @@ class CSP:
         The constraint_checker is a function that performs constraint-checking
         propagation on a CSPState.  By default the checker does
         basic constraint checking (without propagation).
-        
+
         returns the solution state, and the search tree.
         """
         initial_state = self.initial_state()
@@ -340,13 +348,13 @@ class CSP:
         step = 0
         while len(agenda) > 0:
             cur_node = agenda.pop(0)
-            state = cur_node.value        
+            state = cur_node.value
             cur_node.step = step
 
             if verbose:
                 print("-"*20)
                 print("%d. EXAMINING:\n%s" %(step, state.vd_table()))
-        
+
             if not constraint_checker(state, verbose):
                 if verbose:
                     print("%d. FAIL:\n%s" %(step, state.vd_table()))
@@ -363,7 +371,7 @@ class CSP:
             cur_node.status = Node.CONTINUE
             if verbose:
                 print("%d. CONTINUE:\n%s" %(step, state.vd_table()))
-        
+
 
             next_variable_index = state.variable_index + 1
             next_variable = state.get_variable_by_index(next_variable_index)
@@ -378,9 +386,127 @@ class CSP:
             cur_node.add_children(children)
             agenda = children + agenda
             step += 1
-            
+
         # fail! no solution
         return None, search_root
+
+    # MY_CODE
+    def solve_optimal(self,
+                      constraint_checker=basic_constraint_checker,
+                      objective_function=basic_objective_function,
+                      verbose=False):
+        """
+        Perform a best-first search with backtracking to solve
+        This CSP problem.
+
+        The constraint_checker is a function that performs constraint-checking
+        propagation on a CSPState.  By default the checker does
+        basic constraint checking (without propagation).
+
+        The objective function is minimized. It is only called on states
+        that pass constraint_checker (and as such does not need to check
+        the constraints again).
+
+        returns the solution state, and the search tree.
+        """
+        # In the assignment, implementing a best-first search was
+        # extra-credit, sounded tantalizing, decided to do it. Le voila.
+        initial_state = self.initial_state()
+        # initial_state never has its cost checked
+        # initial_state.cost = 99999999  # Just some large value
+        search_root = Node("ROOT", initial_state)
+        agenda = [search_root]
+
+
+        # Quick outline of the best-first search
+        # agenda = [root]
+        # # no extended_list needed because it's a tree
+        # while agenda:
+        #     node = agenda.pop(0)
+        #     if node == goal:
+        #         return solution
+        #     children = node.children()
+        #     sorted_children = sort_by(children, objective_function)
+        #     agenda = merge(agenda, sorted_children)
+
+        step = 0
+        while agenda:
+            cur_node = agenda.pop(0)
+            state = cur_node.value
+            cur_node.step = step
+
+            if verbose:
+                print("-" * 20)
+                print("%d. EXAMINING:\n%s" % (step, state.vd_table()))
+
+            if not constraint_checker(state, verbose):
+                if verbose:
+                    print("%d. FAIL:\n%s" % (step, state.vd_table()))
+                cur_node.status = Node.FAILED
+                step += 1
+                continue
+            # Constraints have been satisfied at this point
+            if state.is_solution():
+                # Since this is a best-first search, this solution is
+                # guaranteed to be optimal
+                cur_node.status = Node.SOLUTION
+                if verbose:
+                    print("%d. SOLUTION:\n%s" % (step, state.vd_table()))
+                return state, search_root
+
+            cur_node.status = Node.CONTINUE
+            if verbose:
+                print("%d. CONTINUE:\n%s" % (step, state.vd_table()))
+
+            next_variable_index = state.variable_index + 1
+            next_variable = state.get_variable_by_index(next_variable_index)
+            values = next_variable.get_domain()
+
+            children = []
+            for value in values:
+                new_state = state.copy()
+                new_state.set_variable_by_index(next_variable_index, value)
+                new_state.cost = objective_function(new_state)
+                children.append(Node(str(value), new_state))
+            cur_node.add_children(children)
+            children.sort(key=lambda node: node.value.cost)
+
+            # Putting children first allows for DFS in cases where the
+            # objective function returns a constant.
+            agenda = merge_sorted(children, agenda, lambda node: node.value.cost)
+            step += 1
+
+        # fail! no solution
+        return None, search_root
+
+# MY_CODE
+def merge_sorted(list_a, list_b, key):
+    # Gives preference to list_a in cases of ties
+    if not list_a:
+        return list_b
+    if not list_b:
+        return list_a
+    list_out = [None] * (len(list_a) + len(list_b))
+    list_out_i = 0
+    list_a_i = 0
+    list_b_i = 0
+    while list_out[-1] is None:
+        if key(list_a[list_a_i]) <= key(list_b[list_b_i]):
+            list_out[list_out_i] = list_a[list_a_i]
+            list_out_i += 1
+            list_a_i += 1
+            if list_a_i >= len(list_a):
+                list_out[list_out_i:] = list_b[list_b_i:]
+                break
+        else:
+            list_out[list_out_i] = list_b[list_b_i]
+            list_out_i += 1
+            list_b_i += 1
+            if list_b_i >= len(list_b):
+                list_out[list_out_i:] = list_a[list_a_i:]
+                break
+    return list_out
+
     
 class Node:
     """
@@ -472,6 +598,32 @@ def solve_csp_problem(problem, checker, verbose=False):
             print("TREE:\n")
             print(search_tree.tree_to_string(search_tree))
         
+    return answer, search_tree
+
+# MY_CODE
+def solve_csp_problem_optimally(problem,
+                                checker,
+                                objective_function,
+                                verbose=False):
+    """
+    problem is a function that returns a CSP object that we can solve.
+    checker is a function that implements the contraint checking.
+    objective_function is the minimized objective function (cost function)
+    """
+    csp = problem()
+    answer, search_tree = csp.solve_optimal(checker,
+                                            objective_function,
+                                            verbose=verbose)
+
+    if verbose:
+        if answer is not None:
+            print("ANSWER: %s" % (answer.solution()))
+        else:
+            print("NO SOLUTION FOUND")
+        if search_tree is not None:
+            print("TREE:\n")
+            print(search_tree.tree_to_string(search_tree))
+
     return answer, search_tree
         
 if __name__ == "__main__":
