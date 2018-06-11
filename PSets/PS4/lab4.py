@@ -4,6 +4,9 @@
 from classify import *
 import math
 
+# MY_CODE
+import matplotlib.pyplot as plt
+
 ##
 ## CSP portion of lab 4.
 ##
@@ -122,7 +125,8 @@ last_senate_votes = read_vote_data('S109desc.csv')
 ### Part 1: Nearest Neighbors
 ## An example of evaluating a nearest-neighbors classifier.
 senate_group1, senate_group2 = crosscheck_groups(senate_people)
-#evaluate(nearest_neighbors(hamming_distance, 1), senate_group1, senate_group2, verbose=1)
+# print('Hamming distance results:')
+# evaluate(nearest_neighbors(hamming_distance, 1), senate_group1, senate_group2, verbose=1)
 
 ## Write the euclidean_distance function.
 ## This function should take two lists of integers and
@@ -131,30 +135,64 @@ senate_group1, senate_group2 = crosscheck_groups(senate_people)
 ## computes Hamming distances.
 
 def euclidean_distance(list1, list2):
-    # this is not the right solution!
-    return hamming_distance(list1, list2)
+    # MY_CODE
+    assert len(list1) == len(list2), 'Lists must be equal length'
+    dist = 0
+    for i in range(len(list1)):
+        dist += (list1[i] - list2[i]) ** 2
+    dist **= 0.5
+    return dist
+
 
 #Once you have implemented euclidean_distance, you can check the results:
-#evaluate(nearest_neighbors(euclidean_distance, 1), senate_group1, senate_group2)
+# print('Euclidean distance results:')
+# evaluate(nearest_neighbors(euclidean_distance, 1), senate_group1,
+#          senate_group2, verbose=True)
 
 ## By changing the parameters you used, you can get a classifier factory that
 ## deals better with independents. Make a classifier that makes at most 3
 ## errors on the Senate.
 
-my_classifier = nearest_neighbors(hamming_distance, 1)
-#evaluate(my_classifier, senate_group1, senate_group2, verbose=1)
+# MY_CODE
+my_classifier = nearest_neighbors(euclidean_distance, 5)
+# evaluate(my_classifier, senate_group1, senate_group2, verbose=1)
 
 ### Part 2: ID Trees
-#print CongressIDTree(senate_people, senate_votes, homogeneous_disorder)
+# print(CongressIDTree(senate_people, senate_votes, homogeneous_disorder))
 
 ## Now write an information_disorder function to replace homogeneous_disorder,
 ## which should lead to simpler trees.
 
 def information_disorder(yes, no):
-    return homogeneous_disorder(yes, no)
+    # MY_CODE
+    # disorder = 0
+    # if yes:
+    #     total = len(yes)
+    #     occ = max([yes.count(e) for e in set(yes)]) / total
+    #     disorder += -total * math.log2(1 - ((occ * (1 - occ)) ** 0.5))
+    # if no:
+    #     total = len(no)
+    #     occ = max([no.count(e) for e in set(no)]) / total
+    #     disorder += -total * math.log2(1 - ((occ * (1 - occ)) ** 0.5))
+    # return disorder / (len(yes) + len(no))
+    disorder = 0
+    if yes:
+        total = len(yes)
+        occ = max([yes.count(e) for e in set(yes)]) / total
+        if occ != 1:
+            disorder += -total * (occ * math.log2(occ) +
+                                  (1 - occ) * math.log2(1 - occ))
+    if no:
+        total = len(no)
+        occ = max([no.count(e) for e in set(no)]) / total
+        if occ != 1:
+            disorder += -total * (occ * math.log2(occ) +
+                                  (1 - occ) * math.log2(1 - occ))
+    return disorder / (len(yes) + len(no))
 
-#print CongressIDTree(senate_people, senate_votes, information_disorder)
-#evaluate(idtree_maker(senate_votes, homogeneous_disorder), senate_group1, senate_group2)
+# print(CongressIDTree(senate_people, senate_votes, information_disorder))
+# evaluate(idtree_maker(senate_votes, homogeneous_disorder), senate_group1,
+#          senate_group2, verbose=True)
 
 ## Now try it on the House of Representatives. However, do it over a data set
 ## that only includes the most recent n votes, to show that it is possible to
@@ -181,16 +219,71 @@ def limited_house_classifier(house_people, house_votes, n, verbose = False):
 
 ## Find a value of n that classifies at least 430 representatives correctly.
 ## Hint: It's not 10.
-N_1 = 10
+N_1 = 44
 rep_classified = limited_house_classifier(house_people, house_votes, N_1)
 
 ## Find a value of n that classifies at least 90 senators correctly.
-N_2 = 10
+N_2 = 67
 senator_classified = limited_house_classifier(senate_people, senate_votes, N_2)
 
 ## Now, find a value of n that classifies at least 95 of last year's senators correctly.
-N_3 = 10
+N_3 = 23
 old_senator_classified = limited_house_classifier(last_senate_people, last_senate_votes, N_3)
+
+
+# MY_CODE
+# Automate the N_x parameter search and discovery
+# def classifier_1(N_x: int):
+#     return limited_house_classifier(house_people, house_votes, N_x)
+# def classifier_2(N_x: int):
+#     return limited_house_classifier(senate_people, senate_votes, N_x)
+# def classifier_3(N_x: int):
+#     return limited_house_classifier(last_senate_people, last_senate_votes, N_x)
+
+# for params in ((classifier_1, 430), (classifier_2, 90), (classifier_3, 95)):
+#     classifier = params[0]
+#     criteria = params[1]
+#     # Assume 1000 is large enough
+#     for N_x in range(1, 1000):
+#         if classifier(N_x) > criteria:
+#             print(N_x)
+#             break
+
+# ls = []
+# for i in range(1, 100):
+#     ls.append(classifier_3(i))
+# plt.plot(ls)
+# plt.show()
+
+# for params in ((classifier_1, 430), (classifier_2, 90), (classifier_3, 90)):
+#     classifier = params[0]
+#     criteria = params[1]
+#     lower_bound = 1
+#     upper_bound = 500
+#     lower_bound_val = None
+#     upper_bound_val = classifier(upper_bound)
+#     while criteria > upper_bound_val:
+#         lower_bound = upper_bound
+#         lower_bound_val = upper_bound_val
+#         upper_bound += 200
+#         upper_bound_val = classifier(upper_bound)
+#     iteration_ct = 1
+#     while abs(upper_bound - lower_bound) > 1:
+#         if lower_bound_val is None:
+#             lower_bound_val = classifier(lower_bound)
+#         if upper_bound_val is None:
+#             upper_bound_val = classifier(upper_bound)
+#         mid_bound = (lower_bound + upper_bound) // 2
+#         mid_bound_val = classifier(mid_bound)
+#         if mid_bound_val < criteria:
+#             lower_bound = mid_bound
+#             lower_bound_val = None
+#         else:
+#             upper_bound = mid_bound
+#             upper_bound_val = None
+#         print('    completing iteration {}'.format(iteration_ct))
+#         iteration_ct += 1
+#     print('Minimum passing N_x: {}'.format(upper_bound))
 
 
 ## The standard survey questions.

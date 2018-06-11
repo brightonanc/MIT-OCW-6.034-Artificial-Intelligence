@@ -452,7 +452,7 @@ class CSP:
                 cur_node.status = Node.SOLUTION
                 if verbose:
                     print("%d. SOLUTION:\n%s" % (step, state.vd_table()))
-                return state, search_root
+                return state, search_root, cur_node.value.cost
 
             cur_node.status = Node.CONTINUE
             if verbose:
@@ -477,7 +477,7 @@ class CSP:
             step += 1
 
         # fail! no solution
-        return None, search_root
+        return None, search_root, None
 
 # MY_CODE
 def merge_sorted(list_a, list_b, key):
@@ -611,18 +611,18 @@ def solve_csp_problem_optimally(problem,
     objective_function is the minimized objective function (cost function)
     """
     csp = problem()
-    answer, search_tree = csp.solve_optimal(checker,
+    answer, search_tree, cost = csp.solve_optimal(checker,
                                             objective_function,
                                             verbose=verbose)
 
-    if verbose:
-        if answer is not None:
-            print("ANSWER: %s" % (answer.solution()))
-        else:
-            print("NO SOLUTION FOUND")
-        if search_tree is not None:
-            print("TREE:\n")
-            print(search_tree.tree_to_string(search_tree))
+    if answer is not None:
+        print("ANSWER: %s" % (answer.solution()))
+        print('Answer cost: {}'.format(cost))
+    else:
+        print("NO SOLUTION FOUND")
+    if search_tree is not None:
+        print("TREE:\n")
+        print(search_tree.tree_to_string(search_tree))
 
     return answer, search_tree
         
